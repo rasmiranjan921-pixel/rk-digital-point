@@ -3,103 +3,142 @@
 <head>
 <title>RK Digital Point</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
+
 <style>
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: #f4f4f4;
+background:#0f172a;
+font-family:Arial;
+color:white;
+text-align:center;
 }
 
-header {
-    background: linear-gradient(90deg,#0f2027,#203a43,#2c5364);
-    color: white;
-    padding: 40px 20px;
-    text-align: center;
+.container {
+margin-top:50px;
 }
 
-h1 {
-    margin: 0;
-    font-size: 32px;
+input {
+padding:10px;
+margin:10px;
+width:80%;
+border:none;
+border-radius:8px;
 }
 
-.section {
-    padding: 40px 20px;
-    text-align: center;
-}
-
-.services {
-    display: grid;
-    grid-template-columns: repeat(auto-fit,minmax(200px,1fr));
-    gap: 20px;
+button {
+padding:10px 20px;
+background:#22c55e;
+border:none;
+border-radius:8px;
+color:white;
+font-weight:bold;
+cursor:pointer;
 }
 
 .card {
-    background: white;
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+background:#1e293b;
+padding:20px;
+margin:20px;
+border-radius:12px;
 }
 
-.button {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 12px 25px;
-    background: #25D366;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-    font-weight: bold;
-}
-
-.callbtn {
-    background: #007BFF;
-}
-
-footer {
-    background: #222;
-    color: white;
-    text-align: center;
-    padding: 15px;
+a {
+color:#22c55e;
 }
 </style>
 </head>
 
 <body>
 
-<header>
-    <h1>RK Digital Point</h1>
-    <p>Owner: Rasmi Ranjan Panda</p>
-</header>
+<h1>RK Digital Point</h1>
 
-<div class="section">
-    <h2>Our Services</h2>
-    <div class="services">
-        <div class="card">
-            <h3>Online Form Fill</h3>
-            <p>All government & private forms available</p>
-        </div>
-        <div class="card">
-            <h3>CSC Services</h3>
-            <p>Pan Card, Aadhaar, Voter ID Services</p>
-        </div>
-        <div class="card">
-            <h3>Photo & Print</h3>
-            <p>Passport photo, Xerox & Lamination</p>
-        </div>
-        <div class="card">
-            <h3>Mobile Recharge</h3>
-            <p>All SIM recharge available here</p>
-        </div>
-    </div>
+<div class="container" id="authBox">
 
-    <a class="button" href="https://wa.me/919556117948">WhatsApp Now</a>
-    <br><br>
-    <a class="button callbtn" href="tel:+919556117948">Call Now</a>
+<div class="card">
+<h3>Register</h3>
+<input type="email" id="email" placeholder="Email"><br>
+<input type="password" id="password" placeholder="Password"><br>
+<button onclick="register()">Register</button>
+<button onclick="login()">Login</button>
 </div>
 
-<footer>
-    © 2026 RK Digital Point | All Rights Reserved
-</footer>
+</div>
+
+<div class="container" id="dashboard" style="display:none;">
+
+<div class="card">
+<h2>Welcome</h2>
+<p>Wallet Balance: ₹ <span id="balance">0</span></p>
+<button onclick="logout()">Logout</button>
+</div>
+
+<div class="card">
+<h3>Add Money</h3>
+<p>UPI: rasmiranjan921@ptaxis</p>
+<a href="https://wa.me/919556117948">Pay & Send Screenshot</a>
+</div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+apiKey: "AIzaSyDQAqC4QRce06nq5z5azcY-FjaO2kaINb8",
+authDomain: "rk-digital-point.firebaseapp.com",
+projectId: "rk-digital-point",
+storageBucket: "rk-digital-point.firebasestorage.app",
+messagingSenderId: "40824483011",
+appId: "1:40824483011:web:c6bcb6a412dc7583cb4676",
+measurementId: "G-WE0WK83ZTN"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const db = getFirestore();
+
+window.register = async function() {
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
+const userCred = await createUserWithEmailAndPassword(auth,email,password);
+await setDoc(doc(db,"users",userCred.user.uid),{
+balance:0
+});
+alert("Registered Successfully");
+}
+
+window.login = async function() {
+const email = document.getElementById("email").value;
+const password = document.getElementById("password").value;
+await signInWithEmailAndPassword(auth,email,password);
+}
+
+window.logout = async function() {
+await signOut(auth);
+}
+
+onAuthStateChanged(auth, async (user)=>{
+if(user){
+document.getElementById("authBox").style.display="none";
+document.getElementById("dashboard").style.display="block";
+const docRef = doc(db,"users",user.uid);
+const docSnap = await getDoc(docRef);
+if(docSnap.exists()){
+document.getElementById("balance").innerText = docSnap.data().balance;
+}
+}else{
+document.getElementById("authBox").style.display="block";
+document.getElementById("dashboard").style.display="none";
+}
+});
+
+</script>
 
 </body>
 </html>
