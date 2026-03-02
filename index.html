@@ -4,90 +4,58 @@
 <title>RK Digital Point</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js"></script>
-
 <style>
-body {
-background:#0f172a;
-font-family:Arial;
-color:white;
-text-align:center;
-}
-
-.container {
-margin-top:50px;
-}
-
-input {
-padding:10px;
-margin:10px;
-width:80%;
-border:none;
-border-radius:8px;
-}
-
-button {
-padding:10px 20px;
-background:#22c55e;
-border:none;
-border-radius:8px;
-color:white;
-font-weight:bold;
-cursor:pointer;
-}
-
-.card {
-background:#1e293b;
-padding:20px;
-margin:20px;
-border-radius:12px;
-}
-
-a {
-color:#22c55e;
-}
+body{margin:0;font-family:Arial;background:#0f172a;color:white}
+header{background:#111827;padding:15px;text-align:center;font-size:22px;font-weight:bold}
+.card{background:#1e293b;margin:15px;padding:20px;border-radius:12px}
+input{padding:8px;margin:5px;width:90%;border-radius:6px;border:none}
+button{padding:8px 15px;border:none;border-radius:6px;background:#22c55e;color:white;cursor:pointer}
+.admin{background:#7c3aed}
+.logout{background:#ef4444}
+.hidden{display:none}
 </style>
-</head>
 
+</head>
 <body>
 
-<h1>RK Digital Point</h1>
+<header>RK Digital Point</header>
 
-<div class="container" id="authBox">
-
-<div class="card">
-<h3>Register</h3>
+<div id="authSection" class="card">
+<h3>Login / Register</h3>
 <input type="email" id="email" placeholder="Email"><br>
 <input type="password" id="password" placeholder="Password"><br>
 <button onclick="register()">Register</button>
 <button onclick="login()">Login</button>
 </div>
 
-</div>
-
-<div class="container" id="dashboard" style="display:none;">
-
+<div id="userDashboard" class="hidden">
 <div class="card">
-<h2>Welcome</h2>
+<h3>User Dashboard</h3>
 <p>Wallet Balance: ₹ <span id="balance">0</span></p>
-<button onclick="logout()">Logout</button>
+<button class="logout" onclick="logout()">Logout</button>
 </div>
 
 <div class="card">
-<h3>Add Money</h3>
+<h4>Add Money</h4>
 <p>UPI: rasmiranjan921@ptaxis</p>
-<a href="https://wa.me/919556117948">Pay & Send Screenshot</a>
+<a href="https://wa.me/919556117948" style="color:#22c55e">Send Payment Screenshot</a>
+</div>
 </div>
 
+<div id="adminPanel" class="hidden">
+<div class="card">
+<h3>👑 Admin Panel</h3>
+<input type="text" id="userId" placeholder="User UID">
+<input type="number" id="amount" placeholder="Amount">
+<button class="admin" onclick="addBalance()">Add Balance</button>
+<button class="logout" onclick="logout()">Logout</button>
+</div>
 </div>
 
 <script type="module">
-
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyDQAqC4QRce06nq5z5azcY-FjaO2kaINb8",
@@ -95,49 +63,64 @@ authDomain: "rk-digital-point.firebaseapp.com",
 projectId: "rk-digital-point",
 storageBucket: "rk-digital-point.firebasestorage.app",
 messagingSenderId: "40824483011",
-appId: "1:40824483011:web:c6bcb6a412dc7583cb4676",
-measurementId: "G-WE0WK83ZTN"
+appId: "1:40824483011:web:c6bcb6a412dc7583cb4676"
 };
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
-window.register = async function() {
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
-const userCred = await createUserWithEmailAndPassword(auth,email,password);
-await setDoc(doc(db,"users",userCred.user.uid),{
-balance:0
-});
-alert("Registered Successfully");
+const adminEmail = "rkdigitalpoint3@gmail.com";
+
+window.register = async function(){
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+const user=await createUserWithEmailAndPassword(auth,email,password);
+await setDoc(doc(db,"users",user.user.uid),{balance:0});
+alert("Registered");
 }
 
-window.login = async function() {
-const email = document.getElementById("email").value;
-const password = document.getElementById("password").value;
+window.login = async function(){
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
 await signInWithEmailAndPassword(auth,email,password);
 }
 
-window.logout = async function() {
+window.logout = async function(){
 await signOut(auth);
 }
 
-onAuthStateChanged(auth, async (user)=>{
+window.addBalance = async function(){
+const uid=document.getElementById("userId").value;
+const amt=parseInt(document.getElementById("amount").value);
+const ref=doc(db,"users",uid);
+const snap=await getDoc(ref);
+if(snap.exists()){
+let current=snap.data().balance;
+await updateDoc(ref,{balance:current+amt});
+alert("Balance Added");
+}
+}
+
+onAuthStateChanged(auth, async(user)=>{
 if(user){
-document.getElementById("authBox").style.display="none";
-document.getElementById("dashboard").style.display="block";
-const docRef = doc(db,"users",user.uid);
-const docSnap = await getDoc(docRef);
-if(docSnap.exists()){
-document.getElementById("balance").innerText = docSnap.data().balance;
+document.getElementById("authSection").classList.add("hidden");
+if(user.email===adminEmail){
+document.getElementById("adminPanel").classList.remove("hidden");
+}else{
+document.getElementById("userDashboard").classList.remove("hidden");
+const ref=doc(db,"users",user.uid);
+const snap=await getDoc(ref);
+if(snap.exists()){
+document.getElementById("balance").innerText=snap.data().balance;
+}
 }
 }else{
-document.getElementById("authBox").style.display="block";
-document.getElementById("dashboard").style.display="none";
+document.getElementById("authSection").classList.remove("hidden");
+document.getElementById("userDashboard").classList.add("hidden");
+document.getElementById("adminPanel").classList.add("hidden");
 }
 });
-
 </script>
 
 </body>
