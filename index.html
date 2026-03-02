@@ -1,44 +1,131 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>RK Digital Point</title>
+<title>RK Digital Point - Ultra Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body{margin:0;font-family:Arial;background:#0f172a;color:white}
-header{background:#111827;padding:15px;text-align:center;font-size:22px;font-weight:bold}
-.card{background:#1e293b;margin:15px;padding:20px;border-radius:12px}
-input{padding:8px;margin:5px;width:90%;border-radius:6px;border:none}
-button{padding:8px 15px;border:none;border-radius:6px;background:#22c55e;color:white;cursor:pointer}
-.admin{background:#7c3aed}
-.logout{background:#ef4444}
-.hidden{display:none}
-</style>
+body{
+margin:0;
+font-family:Arial;
+background:#0f172a;
+color:white;
+display:flex;
+}
 
+.sidebar{
+width:220px;
+background:#111827;
+height:100vh;
+padding:20px;
+box-shadow:2px 0 10px rgba(0,0,0,0.5);
+}
+
+.sidebar h2{
+text-align:center;
+color:#22c55e;
+}
+
+.sidebar button{
+width:100%;
+margin:10px 0;
+padding:10px;
+border:none;
+border-radius:8px;
+background:#1f2937;
+color:white;
+cursor:pointer;
+}
+
+.main{
+flex:1;
+padding:20px;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
+box-shadow:0 0 15px rgba(34,197,94,0.3);
+}
+
+input{
+padding:8px;
+margin:5px;
+border:none;
+border-radius:6px;
+}
+
+button.action{
+background:#22c55e;
+padding:8px 15px;
+border:none;
+border-radius:6px;
+color:white;
+cursor:pointer;
+}
+
+.logout{
+background:#ef4444;
+}
+
+.hidden{
+display:none;
+}
+
+.service-grid{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+gap:15px;
+}
+
+.service{
+background:#0f172a;
+padding:15px;
+border-radius:10px;
+text-align:center;
+box-shadow:0 0 10px rgba(124,58,237,0.4);
+}
+</style>
 </head>
 <body>
 
-<header>RK Digital Point</header>
+<div class="sidebar hidden" id="sidebar">
+<h2>RK Digital</h2>
+<button onclick="showDashboard()">Dashboard</button>
+<button onclick="showServices()">Services</button>
+<button onclick="logout()" class="logout">Logout</button>
+</div>
+
+<div class="main">
 
 <div id="authSection" class="card">
 <h3>Login / Register</h3>
 <input type="email" id="email" placeholder="Email"><br>
 <input type="password" id="password" placeholder="Password"><br>
-<button onclick="register()">Register</button>
-<button onclick="login()">Login</button>
+<button class="action" onclick="register()">Register</button>
+<button class="action" onclick="login()">Login</button>
 </div>
 
-<div id="userDashboard" class="hidden">
+<div id="dashboard" class="hidden">
 <div class="card">
-<h3>User Dashboard</h3>
+<h3>Welcome 👋</h3>
 <p>Wallet Balance: ₹ <span id="balance">0</span></p>
-<button class="logout" onclick="logout()">Logout</button>
+</div>
 </div>
 
+<div id="services" class="hidden">
 <div class="card">
-<h4>Add Money</h4>
-<p>UPI: rasmiranjan921@ptaxis</p>
-<a href="https://wa.me/919556117948" style="color:#22c55e">Send Payment Screenshot</a>
+<h3>Services</h3>
+<div class="service-grid">
+<div class="service">PAN Details</div>
+<div class="service">RC Details</div>
+<div class="service">GST Check</div>
+<div class="service">IFSC Finder</div>
+<div class="service">Vehicle Info</div>
+<div class="service">Recharge</div>
+</div>
 </div>
 </div>
 
@@ -47,9 +134,10 @@ button{padding:8px 15px;border:none;border-radius:6px;background:#22c55e;color:w
 <h3>👑 Admin Panel</h3>
 <input type="text" id="userId" placeholder="User UID">
 <input type="number" id="amount" placeholder="Amount">
-<button class="admin" onclick="addBalance()">Add Balance</button>
-<button class="logout" onclick="logout()">Logout</button>
+<button class="action" onclick="addBalance()">Add Balance</button>
 </div>
+</div>
+
 </div>
 
 <script type="module">
@@ -70,9 +158,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth();
 const db = getFirestore();
 
-const adminEmail = "rkdigitalpoint3@gmail.com";
+const adminEmail="rkdigitalpoint3@gmail.com";
 
-window.register = async function(){
+window.register=async()=>{
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
 const user=await createUserWithEmailAndPassword(auth,email,password);
@@ -80,35 +168,46 @@ await setDoc(doc(db,"users",user.user.uid),{balance:0});
 alert("Registered");
 }
 
-window.login = async function(){
+window.login=async()=>{
 const email=document.getElementById("email").value;
 const password=document.getElementById("password").value;
 await signInWithEmailAndPassword(auth,email,password);
 }
 
-window.logout = async function(){
+window.logout=async()=>{
 await signOut(auth);
 }
 
-window.addBalance = async function(){
+window.addBalance=async()=>{
 const uid=document.getElementById("userId").value;
 const amt=parseInt(document.getElementById("amount").value);
 const ref=doc(db,"users",uid);
 const snap=await getDoc(ref);
 if(snap.exists()){
-let current=snap.data().balance;
-await updateDoc(ref,{balance:current+amt});
+await updateDoc(ref,{balance:snap.data().balance+amt});
 alert("Balance Added");
 }
 }
 
-onAuthStateChanged(auth, async(user)=>{
+window.showDashboard=()=>{
+document.getElementById("dashboard").classList.remove("hidden");
+document.getElementById("services").classList.add("hidden");
+}
+
+window.showServices=()=>{
+document.getElementById("services").classList.remove("hidden");
+document.getElementById("dashboard").classList.add("hidden");
+}
+
+onAuthStateChanged(auth,async(user)=>{
 if(user){
 document.getElementById("authSection").classList.add("hidden");
+document.getElementById("sidebar").classList.remove("hidden");
+
 if(user.email===adminEmail){
 document.getElementById("adminPanel").classList.remove("hidden");
 }else{
-document.getElementById("userDashboard").classList.remove("hidden");
+document.getElementById("dashboard").classList.remove("hidden");
 const ref=doc(db,"users",user.uid);
 const snap=await getDoc(ref);
 if(snap.exists()){
@@ -117,8 +216,7 @@ document.getElementById("balance").innerText=snap.data().balance;
 }
 }else{
 document.getElementById("authSection").classList.remove("hidden");
-document.getElementById("userDashboard").classList.add("hidden");
-document.getElementById("adminPanel").classList.add("hidden");
+document.getElementById("sidebar").classList.add("hidden");
 }
 });
 </script>
